@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>As Earned Agent Lookup Widget - API Read</title>
+    <title>As Earned Agent Lookup Widget - Field Events</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -102,7 +102,7 @@
         let isProcessing = false;
         let agentCode = '';
         let agentName = '';
-        let lastExternalValue = '';
+        let lastSSOValue = '';
 
         // Wait for JotForm Custom Widget API to be ready
         JFCustomWidget.subscribe("ready", function() {
@@ -111,8 +111,8 @@
             // Setup event listeners
             setupEventListeners();
             
-            // Start monitoring for external input using JotForm API
-            startExternalInputMonitoring();
+            // Try to listen for JotForm field changes
+            setupFieldChangeListener();
             
             // Subscribe to form submission
             JFCustomWidget.subscribe("submit", function() {
@@ -158,48 +158,70 @@
             }
         }
 
-        function startExternalInputMonitoring() {
-            console.log('As Earned Agent Lookup Widget: Starting parameter monitoring');
+        function setupFieldChangeListener() {
+            console.log('As Earned Agent Lookup Widget: Setting up field change listener');
             
-            // Monitor for changes in widget parameters
+            // Try to listen for JotForm's internal field change events
+            try {
+                // Listen for postMessage events from JotForm
+                window.addEventListener('message', function(event) {
+                    console.log('As Earned Agent Lookup Widget: Received message:', event.data);
+                    
+                    // Check if this is a field change event
+                    if (event.data && event.data.type === 'fieldChange') {
+                        console.log('As Earned Agent Lookup Widget: Field change detected:', event.data);
+                        if (event.data.fieldName === 'agent_code_field' && event.data.value) {
+                            console.log('As Earned Agent Lookup Widget: SSO field changed to:', event.data.value);
+                            populateWidgetFromSSO(event.data.value);
+                        }
+                    }
+                });
+                
+                // Also try to listen for custom events
+                document.addEventListener('jotformFieldChange', function(event) {
+                    console.log('As Earned Agent Lookup Widget: Custom field change event:', event.detail);
+                    if (event.detail && event.detail.fieldName === 'agent_code_field' && event.detail.value) {
+                        console.log('As Earned Agent Lookup Widget: SSO field changed to:', event.detail.value);
+                        populateWidgetFromSSO(event.detail.value);
+                    }
+                });
+                
+            } catch (e) {
+                console.log('As Earned Agent Lookup Widget: Error setting up field change listener:', e.message);
+            }
+            
+            // Fallback: Monitor the field directly
             setInterval(function() {
-                checkForParameterChanges();
-            }, 500); // Check every 500ms
+                checkSSOField();
+            }, 1000); // Check every second
         }
 
-        function checkForParameterChanges() {
-            // First, get the field name from the widget parameter
-            JFCustomWidget.getWidgetSetting('agentCode', function(fieldName) {
-                if (fieldName) {
-                    console.log('As Earned Agent Lookup Widget: Monitoring field:', fieldName);
-                    
-                    // Try to access the field through parent window
-                    try {
-                        const parentWindow = window.parent;
-                        if (parentWindow && parentWindow.document) {
-                            const field = parentWindow.document.querySelector(`input[name="${fieldName}"]`);
-                            if (field && field.value && field.value !== lastExternalValue) {
-                                console.log('As Earned Agent Lookup Widget: Field value detected:', field.value);
-                                lastExternalValue = field.value;
-                                populateWidgetFromExternal(field.value);
-                            }
-                        }
-                    } catch (e) {
-                        console.log('As Earned Agent Lookup Widget: Cannot access parent window:', e.message);
+        function checkSSOField() {
+            // Try to access the SSO field through parent window
+            try {
+                const parentWindow = window.parent;
+                if (parentWindow && parentWindow.document) {
+                    const ssoField = parentWindow.document.querySelector('input[name="agent_code_field"]');
+                    if (ssoField && ssoField.value && ssoField.value !== lastSSOValue) {
+                        console.log('As Earned Agent Lookup Widget: SSO field value detected:', ssoField.value);
+                        lastSSOValue = ssoField.value;
+                        populateWidgetFromSSO(ssoField.value);
                     }
                 }
-            });
+            } catch (e) {
+                console.log('As Earned Agent Lookup Widget: Cannot access parent window:', e.message);
+            }
         }
 
-        function populateWidgetFromExternal(value) {
-            console.log('As Earned Agent Lookup Widget: Populating widget from external value:', value);
+        function populateWidgetFromSSO(code) {
+            console.log('As Earned Agent Lookup Widget: Populating widget from SSO field:', code);
             
-            // Populate the widget input with the external value
+            // Populate the widget input with the SSO field value
             const agentCodeInput = document.getElementById('agentCodeInput');
             if (agentCodeInput) {
-                agentCodeInput.value = value;
+                agentCodeInput.value = code;
                 // Trigger the lookup
-                lookupAgent(value);
+                lookupAgent(code);
             }
         }
 
