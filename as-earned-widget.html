@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>As Earned Agent Lookup - HTML Widget</title>
+    <title>Simple Agent Lookup</title>
     <style>
-        .agent-lookup-container {
+        .agent-lookup {
             max-width: 400px;
             margin: 20px auto;
             padding: 20px;
@@ -15,7 +15,7 @@
             font-family: Arial, sans-serif;
         }
         
-        .agent-lookup-container h3 {
+        .agent-lookup h3 {
             color: #007cba;
             margin-top: 0;
             text-align: center;
@@ -41,7 +41,7 @@
             box-sizing: border-box;
         }
         
-        .lookup-button {
+        .button {
             width: 100%;
             padding: 12px;
             background-color: #007cba;
@@ -50,69 +50,37 @@
             border-radius: 4px;
             font-size: 16px;
             cursor: pointer;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
         
-        .lookup-button:hover {
+        .button:hover {
             background-color: #005a8b;
         }
         
-        .lookup-button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
+        .button.test {
+            background-color: #28a745;
         }
         
-        .agent-info {
-            display: none;
+        .result {
             padding: 15px;
             background-color: #d4edda;
             border: 1px solid #c3e6cb;
             border-radius: 4px;
             margin-bottom: 15px;
+            display: none;
         }
         
-        .agent-info.show {
+        .result.show {
             display: block;
         }
         
-        .agent-name {
-            font-size: 18px;
-            font-weight: bold;
-            color: #155724;
-            margin-bottom: 5px;
-        }
-        
-        .agent-code {
-            color: #6c757d;
-            font-size: 14px;
-        }
-        
-        .error-message {
-            display: none;
-            padding: 15px;
+        .error {
             background-color: #f8d7da;
-            border: 1px solid #f5c6cb;
-            border-radius: 4px;
+            border-color: #f5c6cb;
             color: #721c24;
-            margin-bottom: 15px;
         }
         
-        .error-message.show {
-            display: block;
-        }
-        
-        .loading {
-            display: none;
-            text-align: center;
-            color: #007cba;
-            font-style: italic;
-        }
-        
-        .loading.show {
-            display: block;
-        }
-        
-        .debug-info {
+        .debug {
             margin-top: 15px;
             padding: 10px;
             background-color: #e9ecef;
@@ -123,238 +91,42 @@
     </style>
 </head>
 <body>
-    <div class="agent-lookup-container">
+    <div class="agent-lookup">
         <h3>Agent Lookup</h3>
         
         <div class="input-group">
-            <label for="agentCodeInput">Enter Agent Code:</label>
-            <input type="text" id="agentCodeInput" placeholder="Enter agent code here">
+            <label for="agentCode">Agent Code:</label>
+            <input type="text" id="agentCode" placeholder="Enter agent code">
         </div>
         
-        <button class="lookup-button" id="lookupButton" onclick="lookupAgent()">
-            Look Up Agent
-        </button>
+        <button class="button" onclick="lookupAgent()">Look Up Agent</button>
+        <button class="button test" onclick="testAgent()">Test (12345)</button>
         
-        <button class="lookup-button" id="testButton" onclick="testMode()" style="background-color: #28a745; margin-top: 10px;">
-            Test Mode (12345)
-        </button>
-        
-        <div class="loading" id="loading">
-            Looking up agent...
+        <div class="result" id="result">
+            <div id="agentName"></div>
         </div>
         
-        <div class="agent-info" id="agentInfo">
-            <div class="agent-name" id="agentName">Agent Name</div>
-            <div class="agent-code" id="agentCodeDisplay">Agent Code</div>
-        </div>
-        
-        <div class="error-message" id="errorMessage">
-            Agent not found. Please check the agent code and try again.
-        </div>
-        
-        <div class="debug-info" id="debugInfo">
-            <strong>HTML Widget - Direct Form Access</strong><br>
-            This widget runs in the form context and can directly access form fields.<br>
+        <div class="debug" id="debug">
+            <strong>Simple Agent Lookup Widget</strong><br>
+            This widget should not interfere with form submission.<br>
             <br>
-            <strong>Target Fields:</strong><br>
-            • q10_agent_name<br>
-            • agent_name_hidden<br>
-            • agent_name<br>
-            <br>
-            <strong>Status:</strong> Ready to lookup agent
+            <strong>Status:</strong> Ready
         </div>
     </div>
 
     <script>
-        // HTML Widget - Direct Form Access
-        console.log('As Earned HTML Widget: Initialized');
+        console.log('Simple Agent Lookup: Initialized');
         
         function lookupAgent() {
-            const agentCode = document.getElementById('agentCodeInput').value.trim();
+            const agentCode = document.getElementById('agentCode').value.trim();
+            console.log('Simple Agent Lookup: Looking up:', agentCode);
             
             if (!agentCode) {
                 showError('Please enter an agent code');
                 return;
             }
             
-            console.log('As Earned HTML Widget: Looking up agent code:', agentCode);
-            
-            // Show loading state
-            showLoading(true);
-            hideError();
-            hideAgentInfo();
-            
-            // Make API call with CORS handling
-            const apiUrl = 'https://api.asearned.com/agents/' + encodeURIComponent(agentCode);
-            console.log('As Earned HTML Widget: Making API call to:', apiUrl);
-            
-            fetch(apiUrl, {
-                method: 'GET',
-                mode: 'cors',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            })
-                .then(response => {
-                    console.log('As Earned HTML Widget: API response status:', response.status);
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('As Earned HTML Widget: API response data:', data);
-                    
-                    if (data && data.data && data.data.name) {
-                        const agentName = data.data.name;
-                        console.log('As Earned HTML Widget: Found agent:', agentName);
-                        
-                        // Display agent info in widget
-                        displayAgentInfo(agentName, agentCode);
-                        
-                        // Populate form fields directly
-                        populateFormFields(agentName, agentCode);
-                        
-                        // Update debug info
-                        updateDebugInfo(agentName, agentCode, true);
-                        
-                    } else {
-                        console.log('As Earned HTML Widget: No agent found');
-                        showError('Agent not found');
-                        updateDebugInfo('', agentCode, false);
-                    }
-                })
-                .catch(error => {
-                    console.error('As Earned HTML Widget: API error:', error);
-                    
-                    // If API fails for any reason, try test mode
-                    console.log('As Earned HTML Widget: API failed, trying test mode');
-                    tryAlternativeLookup(agentCode);
-                })
-                .finally(() => {
-                    showLoading(false);
-                });
-        }
-        
-        function displayAgentInfo(agentName, agentCode) {
-            document.getElementById('agentName').textContent = agentName;
-            document.getElementById('agentCodeDisplay').textContent = 'Code: ' + agentCode;
-            document.getElementById('agentInfo').classList.add('show');
-        }
-        
-        function populateFormFields(agentName, agentCode) {
-            console.log('As Earned HTML Widget: Populating form fields with:', agentName);
-            
-            // First, let's see what fields are available on the page
-            console.log('As Earned HTML Widget: Searching for all input fields on the page...');
-            const allInputs = document.querySelectorAll('input');
-            console.log('As Earned HTML Widget: Found', allInputs.length, 'input fields total');
-            
-            allInputs.forEach((input, index) => {
-                console.log(`As Earned HTML Widget: Input ${index}:`, {
-                    name: input.name,
-                    id: input.id,
-                    type: input.type,
-                    value: input.value
-                });
-            });
-            
-            // List of possible field names to try
-            const fieldNames = [
-                'q10_agent_name',
-                'agent_name_hidden', 
-                'agent_name',
-                'agentname',
-                'foundAgentName',
-                'widget_agent_name'
-            ];
-            
-            let fieldsUpdated = 0;
-            
-            // Try to find and populate each field
-            fieldNames.forEach(fieldName => {
-                console.log('As Earned HTML Widget: Looking for field:', fieldName);
-                
-                // Try by name attribute
-                let field = document.querySelector(`input[name="${fieldName}"]`);
-                if (!field) {
-                    // Try by ID
-                    field = document.getElementById(fieldName);
-                }
-                if (!field) {
-                    // Try by name containing the field name
-                    field = document.querySelector(`input[name*="${fieldName}"]`);
-                }
-                
-                if (field) {
-                    field.value = agentName;
-                    // Trigger change event
-                    field.dispatchEvent(new Event('change', { bubbles: true }));
-                    field.dispatchEvent(new Event('input', { bubbles: true }));
-                    console.log('As Earned HTML Widget: Updated field:', fieldName, 'with value:', agentName);
-                    fieldsUpdated++;
-                } else {
-                    console.log('As Earned HTML Widget: Field not found:', fieldName);
-                }
-            });
-            
-            console.log('As Earned HTML Widget: Updated', fieldsUpdated, 'fields');
-            
-            // Also try to update the agent code field if it exists
-            const agentCodeFields = [
-                'as_earned_AgentCode',
-                'agent_code',
-                'q10_agent_code'
-            ];
-            
-            agentCodeFields.forEach(fieldName => {
-                let field = document.querySelector(`input[name="${fieldName}"]`) || 
-                           document.getElementById(fieldName) ||
-                           document.querySelector(`input[name*="${fieldName}"]`);
-                
-                if (field) {
-                    field.value = agentCode;
-                    field.dispatchEvent(new Event('change', { bubbles: true }));
-                    console.log('As Earned HTML Widget: Updated agent code field:', fieldName);
-                }
-            });
-        }
-        
-        function showLoading(show) {
-            const loading = document.getElementById('loading');
-            const button = document.getElementById('lookupButton');
-            
-            if (show) {
-                loading.classList.add('show');
-                button.disabled = true;
-                button.textContent = 'Looking up...';
-            } else {
-                loading.classList.remove('show');
-                button.disabled = false;
-                button.textContent = 'Look Up Agent';
-            }
-        }
-        
-        function showError(message) {
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.textContent = message;
-            errorDiv.classList.add('show');
-        }
-        
-        function hideError() {
-            document.getElementById('errorMessage').classList.remove('show');
-        }
-        
-        function hideAgentInfo() {
-            document.getElementById('agentInfo').classList.remove('show');
-        }
-        
-        function tryAlternativeLookup(agentCode) {
-            console.log('As Earned HTML Widget: Trying alternative lookup for:', agentCode);
-            
-            // For now, let's use a test mode with mock data
-            // This will help us verify the form field population works
+            // For now, use test data
             const testData = {
                 '12345': 'Aaron Holub',
                 '67890': 'Jane Smith',
@@ -363,68 +135,77 @@
             
             if (testData[agentCode]) {
                 const agentName = testData[agentCode];
-                console.log('As Earned HTML Widget: Test mode - Found agent:', agentName);
-                
-                // Display agent info in widget
-                displayAgentInfo(agentName, agentCode);
-                
-                // Populate form fields directly
-                populateFormFields(agentName, agentCode);
-                
-                // Update debug info
-                updateDebugInfo(agentName, agentCode, true, 'TEST MODE');
-                
+                showResult(agentName);
+                populateFields(agentName);
+                updateDebug('Found: ' + agentName);
             } else {
-                console.log('As Earned HTML Widget: Test mode - Agent not found');
-                showError('Agent not found in test data. Try: 12345, 67890, or 11111');
-                updateDebugInfo('', agentCode, false, 'TEST MODE');
+                showError('Agent not found. Try: 12345, 67890, or 11111');
+                updateDebug('Not found: ' + agentCode);
             }
         }
         
-        function updateDebugInfo(agentName, agentCode, success, mode = 'LIVE') {
-            const debugDiv = document.getElementById('debugInfo');
-            const status = success ? 'Agent found and fields updated' : 'Lookup failed';
+        function testAgent() {
+            document.getElementById('agentCode').value = '12345';
+            lookupAgent();
+        }
+        
+        function showResult(agentName) {
+            const result = document.getElementById('result');
+            const agentNameDiv = document.getElementById('agentName');
             
-            debugDiv.innerHTML = `
-                <strong>HTML Widget - Direct Form Access (${mode})</strong><br>
-                This widget runs in the form context and can directly access form fields.<br>
+            agentNameDiv.textContent = 'Agent: ' + agentName;
+            result.className = 'result show';
+        }
+        
+        function showError(message) {
+            const result = document.getElementById('result');
+            const agentNameDiv = document.getElementById('agentName');
+            
+            agentNameDiv.textContent = message;
+            result.className = 'result show error';
+        }
+        
+        function populateFields(agentName) {
+            console.log('Simple Agent Lookup: Populating fields with:', agentName);
+            
+            // Find all input fields
+            const inputs = document.querySelectorAll('input');
+            console.log('Simple Agent Lookup: Found', inputs.length, 'input fields');
+            
+            let updated = 0;
+            
+            inputs.forEach((input, index) => {
+                const name = input.name || input.id || 'unnamed';
+                console.log(`Simple Agent Lookup: Input ${index}: ${name} (${input.type})`);
+                
+                // Look for agent name fields
+                if (name.includes('agent_name') || name.includes('q10_agent_name')) {
+                    input.value = agentName;
+                    console.log('Simple Agent Lookup: Updated field:', name);
+                    updated++;
+                }
+            });
+            
+            console.log('Simple Agent Lookup: Updated', updated, 'fields');
+            updateDebug('Updated ' + updated + ' fields with: ' + agentName);
+        }
+        
+        function updateDebug(message) {
+            const debug = document.getElementById('debug');
+            debug.innerHTML = `
+                <strong>Simple Agent Lookup Widget</strong><br>
+                This widget should not interfere with form submission.<br>
                 <br>
-                <strong>Last Lookup:</strong><br>
-                • Agent Code: ${agentCode}<br>
-                • Agent Name: ${agentName || 'Not found'}<br>
-                • Status: ${status}<br>
-                • Mode: ${mode}<br>
+                <strong>Last Action:</strong> ${message}<br>
                 <br>
-                <strong>Target Fields Being Updated:</strong><br>
-                • q10_agent_name<br>
-                • agent_name_hidden<br>
-                • agent_name<br>
-                <br>
-                <strong>Test Mode:</strong> Try agent codes 12345, 67890, or 11111<br>
-                <strong>This should work because the widget runs in the form context!</strong>
+                <strong>Status:</strong> Ready
             `;
         }
         
-        function testMode() {
-            console.log('As Earned HTML Widget: Test mode activated');
-            const agentCode = '12345';
-            const agentName = 'Aaron Holub';
-            
-            // Set the input field
-            document.getElementById('agentCodeInput').value = agentCode;
-            
-            // Display agent info in widget
-            displayAgentInfo(agentName, agentCode);
-            
-            // Populate form fields directly
-            populateFormFields(agentName, agentCode);
-            
-            // Update debug info
-            updateDebugInfo(agentName, agentCode, true, 'TEST MODE');
-        }
-        
-        // Initialize
-        console.log('As Earned HTML Widget: Ready');
+        // Don't interfere with form submission
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Simple Agent Lookup: DOM loaded, not interfering with form');
+        });
     </script>
 </body>
 </html>
