@@ -272,36 +272,52 @@
                 console.log('As Earned Agent Lookup Widget Webhook: Sending data to JotForm:', agentName);
                 
                 if (window.JFCustomWidget) {
-                    // Send to the hidden field that JotForm can access
+                    // Get the current agent code value
+                    const agentCode = document.getElementById('as_earned_AgentCode').value;
+                    
+                    // Send ALL widget data to JotForm - this is what gets included in submissions
                     const dataToSend = {
+                        // Agent code field (this should already exist in your form)
+                        'as_earned_AgentCode': agentCode,
+                        
+                        // Agent name - try multiple field names
+                        'q10_agent_name': agentName,
+                        'agent_name': agentName,
+                        'agentname': agentName,
+                        'foundAgentName': agentName,
+                        
+                        // Additional fields that might exist
                         'agent_name_hidden': agentName,
                         'widget_agent_name': agentName,
                         'hidden_agent_name': agentName
                     };
                     
-                    console.log('As Earned Agent Lookup Widget Webhook: Sending data:', dataToSend);
+                    console.log('As Earned Agent Lookup Widget Webhook: Sending complete widget data:', dataToSend);
                     JFCustomWidget.sendSubmit(dataToSend);
                     
                     // Update debug info
-                    this.updateDebugInfo(agentName);
+                    this.updateDebugInfo(agentName, agentCode);
                 } else {
                     console.log('As Earned Agent Lookup Widget Webhook: JotForm Custom Widget API not available');
                 }
             }
 
-            updateDebugInfo(agentName) {
+            updateDebugInfo(agentName, agentCode) {
                 const debugContent = document.getElementById('debugInfo');
                 if (debugContent) {
                     debugContent.innerHTML = `
-                        <strong>Agent Found:</strong> ${agentName}<br>
-                        <strong>Data Sent To:</strong> agent_name_hidden field<br>
+                        <strong>Widget Data Being Sent:</strong><br>
+                        • Agent Code: "${agentCode}"<br>
+                        • Agent Name: "${agentName}"<br>
                         <br>
-                        <strong>Next Steps:</strong><br>
-                        1. Create a hidden field named "agent_name_hidden" in your form<br>
-                        2. Set up conditional logic:<br>
-                           &nbsp;&nbsp;• When: agent_name_hidden is not empty<br>
-                           &nbsp;&nbsp;• Then: Set q10_agent_name = agent_name_hidden<br>
-                        3. The visible field should now show "${agentName}"
+                        <strong>Fields Being Populated:</strong><br>
+                        • as_earned_AgentCode: "${agentCode}"<br>
+                        • q10_agent_name: "${agentName}"<br>
+                        • agent_name: "${agentName}"<br>
+                        • foundAgentName: "${agentName}"<br>
+                        <br>
+                        <strong>This data will appear in form submissions!</strong><br>
+                        The widget's internal fields are now included in the submission data.
                     `;
                 }
             }
