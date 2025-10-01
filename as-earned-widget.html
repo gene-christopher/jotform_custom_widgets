@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>As Earned Agent Lookup Widget v2</title>
+    <title>As Earned Agent Lookup Widget v3</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -87,14 +87,14 @@
             proxyEndpoint: 'https://default3bbdae4643cd41c5868fb316259734.bd.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/c047d855f89d41688ffb7de54a581cee/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=KKmAhgBHOwwp0o6ck-F08gyWpiCia6Xdv-WE2MZLUns'
         };
 
-        class AsEarnedAgentLookupWidgetV2 {
+        class AsEarnedAgentLookupWidgetV3 {
             constructor() {
                 this.isProcessing = false;
                 this.init();
             }
 
             init() {
-                console.log('As Earned Agent Lookup Widget V2: Initializing...');
+                console.log('As Earned Agent Lookup Widget V3: Initializing...');
                 this.setupEventListeners();
             }
 
@@ -144,7 +144,7 @@
                         this.showError(true);
                     }
                 } catch (error) {
-                    console.error('As Earned Agent Lookup Widget V2: Lookup error:', error);
+                    console.error('As Earned Agent Lookup Widget V3: Lookup error:', error);
                     this.clearFields();
                     this.showError(true);
                 } finally {
@@ -170,29 +170,29 @@
                     }
 
                     const result = await response.json();
-                    console.log('As Earned Agent Lookup Widget V2: API response:', result);
+                    console.log('As Earned Agent Lookup Widget V3: API response:', result);
                     
                     // Wrap the result in the expected format if needed
                     if (result && !result.hasOwnProperty('success')) {
-                        console.log('As Earned Agent Lookup Widget V2: Wrapping response in success/data format');
+                        console.log('As Earned Agent Lookup Widget V3: Wrapping response in success/data format');
                         const wrappedResult = {
                             success: true,
                             data: result.data || result
                         };
-                        console.log('As Earned Agent Lookup Widget V2: Final wrapped result:', wrappedResult);
+                        console.log('As Earned Agent Lookup Widget V3: Final wrapped result:', wrappedResult);
                         return wrappedResult;
                     }
                     
                     return result;
                 } catch (error) {
-                    console.error('As Earned Agent Lookup Widget V2: API call failed:', error);
+                    console.error('As Earned Agent Lookup Widget V3: API call failed:', error);
                     throw error;
                 }
             }
 
             populateFormFields(agentData) {
-                console.log('As Earned Agent Lookup Widget V2: Starting to populate fields with data:', agentData);
-                console.log('As Earned Agent Lookup Widget V2: Full data structure:', JSON.stringify(agentData, null, 2));
+                console.log('As Earned Agent Lookup Widget V3: Starting to populate fields with data:', agentData);
+                console.log('As Earned Agent Lookup Widget V3: Full data structure:', JSON.stringify(agentData, null, 2));
                 
                 // Try multiple possible paths for the agent name
                 let agentName = null;
@@ -209,21 +209,21 @@
                 
                 for (const path of possiblePaths) {
                     agentName = this.getNestedValue(agentData, path);
-                    console.log(`As Earned Agent Lookup Widget V2: Trying path '${path}':`, agentName);
+                    console.log(`As Earned Agent Lookup Widget V3: Trying path '${path}':`, agentName);
                     if (agentName) {
-                        console.log(`As Earned Agent Lookup Widget V2: Found agent name at path '${path}':`, agentName);
+                        console.log(`As Earned Agent Lookup Widget V3: Found agent name at path '${path}':`, agentName);
                         break;
                     }
                 }
                 
                 if (agentName) {
-                    console.log('As Earned Agent Lookup Widget V2: Found agent name:', agentName);
+                    console.log('As Earned Agent Lookup Widget V3: Found agent name:', agentName);
                     this.setFieldValue(agentName);
                 } else {
-                    console.log('As Earned Agent Lookup Widget V2: No agent name found in any expected path');
-                    console.log('As Earned Agent Lookup Widget V2: Available keys in data:', agentData ? Object.keys(agentData) : 'No data object');
+                    console.log('As Earned Agent Lookup Widget V3: No agent name found in any expected path');
+                    console.log('As Earned Agent Lookup Widget V3: Available keys in data:', agentData ? Object.keys(agentData) : 'No data object');
                     if (agentData && agentData.data) {
-                        console.log('As Earned Agent Lookup Widget V2: Available keys in data.data:', Object.keys(agentData.data));
+                        console.log('As Earned Agent Lookup Widget V3: Available keys in data.data:', Object.keys(agentData.data));
                     }
                     this.clearFields();
                 }
@@ -236,10 +236,19 @@
             }
 
             setFieldValue(value) {
-                console.log(`As Earned Agent Lookup Widget V2: Looking for agent name field to set value: ${value}`);
+                console.log(`As Earned Agent Lookup Widget V3: Looking for agent name field to set value: ${value}`);
+                
+                // Try multiple times with delays to catch fields that load later
+                this.trySetField(value, 0);
+            }
+            
+            trySetField(value, attempt) {
+                console.log(`As Earned Agent Lookup Widget V3: Attempt ${attempt + 1} to find field for value: ${value}`);
                 
                 const allInputs = document.querySelectorAll('input, select, textarea');
                 let targetField = null;
+                
+                console.log(`As Earned Agent Lookup Widget V3: Found ${allInputs.length} total input fields`);
                 
                 // Look for fields that might be agent name fields (flexible matching)
                 const agentNamePatterns = [
@@ -247,23 +256,18 @@
                     'agent_name', 
                     'as_earned_agentname',
                     'as_earned_agent_name',
-                    'as_earned_agentname',
-                    'as_earned_agent_name',
-                    'agentname',
-                    'agent_name',
                     'name',
                     'fullname',
                     'full_name'
                 ];
                 
-                console.log('As Earned Agent Lookup Widget V2: Available input fields:');
-                console.log('As Earned Agent Lookup Widget V2: Total inputs found:', allInputs.length);
+                console.log('As Earned Agent Lookup Widget V3: Available input fields:');
                 allInputs.forEach((input, index) => {
                     console.log(`  ${index + 1}. Name: "${input.name}", ID: "${input.id}", Type: "${input.type}"`);
                 });
                 
                 // Also check for any field containing "agent" or "name"
-                console.log('As Earned Agent Lookup Widget V2: Looking for fields containing "agent" or "name":');
+                console.log('As Earned Agent Lookup Widget V3: Looking for fields containing "agent" or "name":');
                 allInputs.forEach((input, index) => {
                     if (input.name && (input.name.toLowerCase().includes('agent') || input.name.toLowerCase().includes('name'))) {
                         console.log(`  FOUND: ${index + 1}. Name: "${input.name}", ID: "${input.id}", Type: "${input.type}"`);
@@ -273,13 +277,13 @@
                 for (const input of allInputs) {
                     if (input.name) {
                         const fieldName = input.name.toLowerCase();
-                        console.log(`As Earned Agent Lookup Widget V2: Checking field "${input.name}" (lowercase: "${fieldName}")`);
+                        console.log(`As Earned Agent Lookup Widget V3: Checking field "${input.name}" (lowercase: "${fieldName}")`);
                         
                         // Check if field name contains any agent name patterns
                         for (const pattern of agentNamePatterns) {
-                            console.log(`As Earned Agent Lookup Widget V2: Checking pattern "${pattern}" against "${fieldName}"`);
+                            console.log(`As Earned Agent Lookup Widget V3: Checking pattern "${pattern}" against "${fieldName}"`);
                             if (fieldName.includes(pattern)) {
-                                console.log(`As Earned Agent Lookup Widget V2: MATCH! Found potential agent name field: ${input.name}`);
+                                console.log(`As Earned Agent Lookup Widget V3: MATCH! Found potential agent name field: ${input.name}`);
                                 targetField = input;
                                 break;
                             }
@@ -290,19 +294,25 @@
                 }
                 
                 if (targetField) {
-                    console.log(`As Earned Agent Lookup Widget V2: Setting field value for ${targetField.name} to: ${value}`);
+                    console.log(`As Earned Agent Lookup Widget V3: Setting field value for ${targetField.name} to: ${value}`);
                     targetField.value = value;
                     targetField.dispatchEvent(new Event('change', { bubbles: true }));
                     
                     // Send to JotForm using the Custom Widget API
                     if (window.JFCustomWidget) {
-                        console.log('As Earned Agent Lookup Widget V2: JotForm Custom Widget API available, sending data');
+                        console.log('As Earned Agent Lookup Widget V3: JotForm Custom Widget API available, sending data');
                         JFCustomWidget.sendSubmit({
                             [targetField.name]: value
                         });
                     }
+                } else if (attempt < 3) {
+                    // Try again after a delay
+                    console.log(`As Earned Agent Lookup Widget V3: No field found on attempt ${attempt + 1}, trying again in 500ms...`);
+                    setTimeout(() => {
+                        this.trySetField(value, attempt + 1);
+                    }, 500);
                 } else {
-                    console.log('As Earned Agent Lookup Widget V2: No agent name field found. Available fields:');
+                    console.log('As Earned Agent Lookup Widget V3: No agent name field found after all attempts. Available fields:');
                     allInputs.forEach((input, index) => {
                         console.log(`  ${index + 1}. Name: "${input.name}", ID: "${input.id}", Type: "${input.type}"`);
                     });
@@ -310,7 +320,7 @@
             }
 
             clearFields() {
-                console.log('As Earned Agent Lookup Widget V2: Clearing agent name fields');
+                console.log('As Earned Agent Lookup Widget V3: Clearing agent name fields');
                 
                 const allInputs = document.querySelectorAll('input, select, textarea');
                 const agentNamePatterns = [
@@ -318,8 +328,6 @@
                     'agent_name', 
                     'as_earned_agentname',
                     'as_earned_agent_name',
-                    'agentname',
-                    'agent_name',
                     'name',
                     'fullname',
                     'full_name'
@@ -332,7 +340,7 @@
                         // Check if field name contains any agent name patterns
                         for (const pattern of agentNamePatterns) {
                             if (fieldName.includes(pattern)) {
-                                console.log(`As Earned Agent Lookup Widget V2: Clearing field: ${input.name}`);
+                                console.log(`As Earned Agent Lookup Widget V3: Clearing field: ${input.name}`);
                                 input.value = '';
                                 input.dispatchEvent(new Event('change', { bubbles: true }));
                                 
@@ -366,20 +374,20 @@
 
         // Initialize the widget when the script loads
         document.addEventListener('DOMContentLoaded', () => {
-            new AsEarnedAgentLookupWidgetV2();
+            new AsEarnedAgentLookupWidgetV3();
         });
 
         // Also initialize immediately if DOM is already loaded
         if (document.readyState !== 'loading') {
-            new AsEarnedAgentLookupWidgetV2();
+            new AsEarnedAgentLookupWidgetV3();
         }
 
         // JotForm Custom Widget Integration
-        console.log('As Earned Agent Lookup Widget V2: Checking for JotForm Custom Widget API...');
-        console.log('As Earned Agent Lookup Widget V2: window.JFCustomWidget available:', !!window.JFCustomWidget);
+        console.log('As Earned Agent Lookup Widget V3: Checking for JotForm Custom Widget API...');
+        console.log('As Earned Agent Lookup Widget V3: window.JFCustomWidget available:', !!window.JFCustomWidget);
         
         if (window.JFCustomWidget) {
-            console.log('As Earned Agent Lookup Widget V2: JotForm Custom Widget API found, setting up listeners');
+            console.log('As Earned Agent Lookup Widget V3: JotForm Custom Widget API found, setting up listeners');
             JFCustomWidget.subscribe('ready', function() {
                 console.log('JotForm Custom Widget: Ready');
             });
@@ -394,7 +402,7 @@
                 });
             });
         } else {
-            console.log('As Earned Agent Lookup Widget V2: JotForm Custom Widget API not available - this is normal when testing outside JotForm');
+            console.log('As Earned Agent Lookup Widget V3: JotForm Custom Widget API not available - this is normal when testing outside JotForm');
         }
     </script>
 </body>
