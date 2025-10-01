@@ -135,6 +135,10 @@
             Look Up Agent
         </button>
         
+        <button class="lookup-button" id="testButton" onclick="testMode()" style="background-color: #28a745; margin-top: 10px;">
+            Test Mode (12345)
+        </button>
+        
         <div class="loading" id="loading">
             Looking up agent...
         </div>
@@ -224,14 +228,9 @@
                 .catch(error => {
                     console.error('As Earned HTML Widget: API error:', error);
                     
-                    // If CORS fails, try a different approach
-                    if (error.message.includes('Failed to fetch') || error.message.includes('CORS')) {
-                        console.log('As Earned HTML Widget: CORS error detected, trying alternative approach');
-                        tryAlternativeLookup(agentCode);
-                    } else {
-                        showError('Error looking up agent: ' + error.message);
-                        updateDebugInfo('', agentCode, false);
-                    }
+                    // If API fails for any reason, try test mode
+                    console.log('As Earned HTML Widget: API failed, trying test mode');
+                    tryAlternativeLookup(agentCode);
                 })
                 .finally(() => {
                     showLoading(false);
@@ -247,6 +246,20 @@
         function populateFormFields(agentName, agentCode) {
             console.log('As Earned HTML Widget: Populating form fields with:', agentName);
             
+            // First, let's see what fields are available on the page
+            console.log('As Earned HTML Widget: Searching for all input fields on the page...');
+            const allInputs = document.querySelectorAll('input');
+            console.log('As Earned HTML Widget: Found', allInputs.length, 'input fields total');
+            
+            allInputs.forEach((input, index) => {
+                console.log(`As Earned HTML Widget: Input ${index}:`, {
+                    name: input.name,
+                    id: input.id,
+                    type: input.type,
+                    value: input.value
+                });
+            });
+            
             // List of possible field names to try
             const fieldNames = [
                 'q10_agent_name',
@@ -261,6 +274,8 @@
             
             // Try to find and populate each field
             fieldNames.forEach(fieldName => {
+                console.log('As Earned HTML Widget: Looking for field:', fieldName);
+                
                 // Try by name attribute
                 let field = document.querySelector(`input[name="${fieldName}"]`);
                 if (!field) {
@@ -388,6 +403,24 @@
                 <strong>Test Mode:</strong> Try agent codes 12345, 67890, or 11111<br>
                 <strong>This should work because the widget runs in the form context!</strong>
             `;
+        }
+        
+        function testMode() {
+            console.log('As Earned HTML Widget: Test mode activated');
+            const agentCode = '12345';
+            const agentName = 'Aaron Holub';
+            
+            // Set the input field
+            document.getElementById('agentCodeInput').value = agentCode;
+            
+            // Display agent info in widget
+            displayAgentInfo(agentName, agentCode);
+            
+            // Populate form fields directly
+            populateFormFields(agentName, agentCode);
+            
+            // Update debug info
+            updateDebugInfo(agentName, agentCode, true, 'TEST MODE');
         }
         
         // Initialize
