@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>As Earned Agent Lookup Widget - Correct Implementation</title>
+    <title>As Earned Agent Lookup Widget - Safe Version</title>
     <style>
         .agent-lookup-container {
             max-width: 400px;
@@ -131,7 +131,7 @@
             <input type="text" id="as_earned_AgentCode" placeholder="Enter agent code here">
         </div>
         
-        <button class="lookup-button" id="lookupButton" onclick="lookupAgent()">
+        <button class="lookup-button" id="lookupButton" type="button" onclick="lookupAgent()">
             Look Up Agent
         </button>
         
@@ -149,8 +149,8 @@
         </div>
         
         <div class="debug-info" id="debugInfo">
-            <strong>Correct Custom Widget Implementation</strong><br>
-            This widget uses the proper JFCustomWidget API methods.<br>
+            <strong>Safe Custom Widget Implementation</strong><br>
+            This widget should not interfere with form submission.<br>
             <br>
             <strong>Status:</strong> Ready<br>
             <strong>Widget Value:</strong> <span id="widgetValue">None</span>
@@ -158,38 +158,42 @@
     </div>
 
     <script>
-        // Correct Custom Widget Implementation
-        console.log('As Earned Agent Lookup Widget: Initialized');
+        // Safe Custom Widget Implementation
+        console.log('As Earned Agent Lookup Widget Safe: Initialized');
         
         // Store the current agent name for submission
         let currentAgentName = '';
         let currentAgentCode = '';
         
-        // Subscribe to JotForm events
+        // Minimal JotForm integration - only what's absolutely necessary
         if (window.JFCustomWidget) {
-            console.log('As Earned Agent Lookup Widget: JotForm Custom Widget API available');
+            console.log('As Earned Agent Lookup Widget Safe: JotForm API available');
             
-            // Subscribe to ready event
+            // Only subscribe to ready event
             JFCustomWidget.subscribe("ready", function() {
-                console.log('As Earned Agent Lookup Widget: Widget ready');
+                console.log('As Earned Agent Lookup Widget Safe: Widget ready');
                 updateDebugInfo('Widget ready');
             });
             
-            // Subscribe to submit event - THIS IS THE KEY!
+            // Subscribe to submit event with minimal code
             JFCustomWidget.subscribe("submit", function() {
-                console.log('As Earned Agent Lookup Widget: Form submitting, sending data:', currentAgentName);
+                console.log('As Earned Agent Lookup Widget Safe: Form submitting');
                 
-                const dataToSend = {
-                    valid: true,
-                    value: currentAgentName || '' // This is what gets included in the submission
-                };
-                
-                console.log('As Earned Agent Lookup Widget: Sending to JotForm:', dataToSend);
-                JFCustomWidget.sendSubmit(dataToSend);
+                if (currentAgentName) {
+                    const dataToSend = {
+                        valid: true,
+                        value: currentAgentName
+                    };
+                    
+                    console.log('As Earned Agent Lookup Widget Safe: Sending:', dataToSend);
+                    JFCustomWidget.sendSubmit(dataToSend);
+                } else {
+                    console.log('As Earned Agent Lookup Widget Safe: No agent name to send');
+                }
             });
             
         } else {
-            console.log('As Earned Agent Lookup Widget: JotForm Custom Widget API not available');
+            console.log('As Earned Agent Lookup Widget Safe: JotForm API not available');
         }
         
         function lookupAgent() {
@@ -200,82 +204,50 @@
                 return;
             }
             
-            console.log('As Earned Agent Lookup Widget: Looking up agent code:', agentCode);
+            console.log('As Earned Agent Lookup Widget Safe: Looking up:', agentCode);
             
             // Show loading state
             showLoading(true);
             hideError();
             hideAgentInfo();
             
-            // Use test data for now
+            // Use test data
             const testData = {
                 '12345': 'Aaron Holub',
                 '67890': 'Jane Smith',
                 '11111': 'John Doe'
             };
             
-            // Simulate API call with timeout
+            // Simulate lookup
             setTimeout(() => {
                 if (testData[agentCode]) {
                     const agentName = testData[agentCode];
-                    console.log('As Earned Agent Lookup Widget: Found agent:', agentName);
+                    console.log('As Earned Agent Lookup Widget Safe: Found:', agentName);
                     
-                    // Store the values for submission
+                    // Store for submission
                     currentAgentName = agentName;
                     currentAgentCode = agentCode;
                     
-                    // Display agent info in widget
+                    // Display in widget
                     displayAgentInfo(agentName, agentCode);
-                    
-                    // Send data immediately to form fields
-                    sendDataToForm(agentName, agentCode);
-                    
-                    // Update debug info
-                    updateDebugInfo('Agent found: ' + agentName);
+                    updateDebugInfo('Found: ' + agentName);
                     
                 } else {
-                    console.log('As Earned Agent Lookup Widget: Agent not found');
+                    console.log('As Earned Agent Lookup Widget Safe: Not found');
                     currentAgentName = '';
                     currentAgentCode = '';
                     showError('Agent not found. Try: 12345, 67890, or 11111');
-                    updateDebugInfo('Agent not found');
+                    updateDebugInfo('Not found');
                 }
                 
                 showLoading(false);
-            }, 1000);
+            }, 500);
         }
         
         function displayAgentInfo(agentName, agentCode) {
             document.getElementById('agentName').textContent = agentName;
             document.getElementById('agentCodeDisplay').textContent = 'Code: ' + agentCode;
             document.getElementById('agentInfo').classList.add('show');
-        }
-        
-        function sendDataToForm(agentName, agentCode) {
-            console.log('As Earned Agent Lookup Widget: Sending data to form fields');
-            
-            // Try to populate form fields directly
-            const fieldNames = [
-                'q10_agent_name',
-                'agent_name_hidden',
-                'agent_name',
-                'agentname'
-            ];
-            
-            let fieldsUpdated = 0;
-            
-            fieldNames.forEach(fieldName => {
-                let field = document.querySelector(`input[name="${fieldName}"]`) || 
-                           document.getElementById(fieldName);
-                
-                if (field) {
-                    field.value = agentName;
-                    console.log('As Earned Agent Lookup Widget: Updated field:', fieldName);
-                    fieldsUpdated++;
-                }
-            });
-            
-            console.log('As Earned Agent Lookup Widget: Updated', fieldsUpdated, 'form fields');
         }
         
         function showLoading(show) {
@@ -314,23 +286,19 @@
             widgetValueSpan.textContent = currentAgentName || 'None';
             
             debugDiv.innerHTML = `
-                <strong>Correct Custom Widget Implementation</strong><br>
-                This widget uses the proper JFCustomWidget API methods.<br>
+                <strong>Safe Custom Widget Implementation</strong><br>
+                This widget should not interfere with form submission.<br>
                 <br>
                 <strong>Status:</strong> ${message}<br>
                 <strong>Widget Value:</strong> ${currentAgentName || 'None'}<br>
                 <br>
-                <strong>How it works:</strong><br>
-                • Widget stores agent name in currentAgentName<br>
-                • On form submit, sends value via JFCustomWidget.sendSubmit()<br>
-                • This value will appear in form submissions<br>
-                <br>
-                <strong>Test with: 12345, 67890, or 11111</strong>
+                <strong>Test with: 12345, 67890, or 11111</strong><br>
+                <strong>Form submission should work normally!</strong>
             `;
         }
         
         // Initialize
-        console.log('As Earned Agent Lookup Widget: Ready');
+        console.log('As Earned Agent Lookup Widget Safe: Ready');
     </script>
 </body>
 </html>
