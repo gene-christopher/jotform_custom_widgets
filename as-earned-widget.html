@@ -186,15 +186,13 @@
                 console.log('As Earned Agent Lookup Widget: Current agent code:', this.agentCode);
                 console.log('As Earned Agent Lookup Widget: Current agent name:', this.agentName);
                 
+                // Create a formatted string with both values for the custom widget field
+                const widgetValue = `Agent Code: ${this.agentCode} | Agent Name: ${this.agentName}`;
+                
                 // Send the data to JotForm using the Custom Widget API
                 if (window.JFCustomWidget) {
-                    const submitData = {
-                        'as_earned_AgentCode': this.agentCode,
-                        'as_earned_AgentName': this.agentName
-                    };
-                    
-                    console.log('As Earned Agent Lookup Widget: Sending data to JotForm:', submitData);
-                    JFCustomWidget.sendSubmit(submitData);
+                    console.log('As Earned Agent Lookup Widget: Sending widget value to JotForm:', widgetValue);
+                    JFCustomWidget.sendSubmit(widgetValue);
                 }
             }
 
@@ -350,6 +348,11 @@
                 const agentCodeInput = document.getElementById('agentCodeInput');
                 if (agentCodeInput) {
                     agentCodeInput.value = '';
+                }
+                
+                // Clear the widget value in JotForm
+                if (window.JFCustomWidget) {
+                    JFCustomWidget.sendSubmit('');
                 }
                 
                 this.showError(false);
