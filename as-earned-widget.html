@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>As Earned Agent Lookup Widget - Final</title>
+    <title>As Earned Agent Lookup Widget - Debug</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -71,6 +71,16 @@
             font-size: 0.9rem;
             margin-top: 5px;
         }
+        
+        .debug-info {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: #374151;
+        }
     </style>
 </head>
 <body>
@@ -80,13 +90,19 @@
             <input type="text" id="as_earned_AgentCode" name="as_earned_AgentCode" placeholder="Enter agent code...">
             <div class="loading" id="loading">Looking up agent...</div>
             <div class="error" id="error">Agent not found</div>
-            <div class="success" id="success">Agent found! Check the form fields below.</div>
+            <div class="success" id="success">Agent found! Check the debug info below.</div>
         </div>
         
         <!-- Display found agent info -->
         <div class="form-group" id="agentInfo" style="display: none;">
             <label>Found Agent:</label>
             <input type="text" id="foundAgentName" readonly placeholder="Agent name will appear here">
+        </div>
+        
+        <!-- Debug information -->
+        <div class="debug-info" id="debugInfo">
+            <strong>Debug Information:</strong><br>
+            <div id="debugContent">Click "Lookup Agent" to see debug info...</div>
         </div>
     </div>
 
@@ -99,15 +115,16 @@
             proxyEndpoint: 'https://default3bbdae4643cd41c5868fb316259734.bd.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/c047d855f89d41688ffb7de54a581cee/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=KKmAhgBHOwwp0o6ck-F08gyWpiCia6Xdv-WE2MZLUns'
         };
 
-        class AsEarnedAgentLookupWidgetFinal {
+        class AsEarnedAgentLookupWidgetDebug {
             constructor() {
                 this.isProcessing = false;
                 this.init();
             }
 
             init() {
-                console.log('As Earned Agent Lookup Widget Final: Initializing...');
+                console.log('As Earned Agent Lookup Widget Debug: Initializing...');
                 this.setupEventListeners();
+                this.showDebugInfo();
             }
 
             setupEventListeners() {
@@ -126,6 +143,22 @@
                             this.lookupAgent(e.target.value);
                         }
                     });
+                }
+            }
+
+            showDebugInfo() {
+                const debugContent = document.getElementById('debugContent');
+                if (debugContent) {
+                    debugContent.innerHTML = `
+                        <strong>JotForm Custom Widget API:</strong> ${window.JFCustomWidget ? 'Available' : 'Not Available'}<br>
+                        <strong>Widget Ready:</strong> ${window.JFCustomWidget ? 'Yes' : 'No'}<br>
+                        <strong>Current Time:</strong> ${new Date().toLocaleTimeString()}<br>
+                        <br>
+                        <strong>Instructions:</strong><br>
+                        1. Enter an agent code above<br>
+                        2. Check the debug info below to see what field names exist<br>
+                        3. The widget will try to send data to all possible field names
+                    `;
                 }
             }
 
@@ -153,7 +186,7 @@
                         this.handleFailedLookup();
                     }
                 } catch (error) {
-                    console.error('As Earned Agent Lookup Widget Final: Lookup error:', error);
+                    console.error('As Earned Agent Lookup Widget Debug: Lookup error:', error);
                     this.handleFailedLookup();
                 } finally {
                     this.isProcessing = false;
@@ -178,28 +211,28 @@
                     }
 
                     const result = await response.json();
-                    console.log('As Earned Agent Lookup Widget Final: API response:', result);
+                    console.log('As Earned Agent Lookup Widget Debug: API response:', result);
                     
                     // Wrap the result in the expected format if needed
                     if (result && !result.hasOwnProperty('success')) {
-                        console.log('As Earned Agent Lookup Widget Final: Wrapping response in success/data format');
+                        console.log('As Earned Agent Lookup Widget Debug: Wrapping response in success/data format');
                         const wrappedResult = {
                             success: true,
                             data: result.data || result
                         };
-                        console.log('As Earned Agent Lookup Widget Final: Final wrapped result:', wrappedResult);
+                        console.log('As Earned Agent Lookup Widget Debug: Final wrapped result:', wrappedResult);
                         return wrappedResult;
                     }
                     
                     return result;
                 } catch (error) {
-                    console.error('As Earned Agent Lookup Widget Final: API call failed:', error);
+                    console.error('As Earned Agent Lookup Widget Debug: API call failed:', error);
                     throw error;
                 }
             }
 
             handleSuccessfulLookup(agentData) {
-                console.log('As Earned Agent Lookup Widget Final: Starting to populate fields with data:', agentData);
+                console.log('As Earned Agent Lookup Widget Debug: Starting to populate fields with data:', agentData);
                 
                 // Try multiple possible paths for the agent name
                 let agentName = null;
@@ -215,15 +248,15 @@
                 
                 for (const path of possiblePaths) {
                     agentName = this.getNestedValue(agentData, path);
-                    console.log(`As Earned Agent Lookup Widget Final: Trying path '${path}':`, agentName);
+                    console.log(`As Earned Agent Lookup Widget Debug: Trying path '${path}':`, agentName);
                     if (agentName) {
-                        console.log(`As Earned Agent Lookup Widget Final: Found agent name at path '${path}':`, agentName);
+                        console.log(`As Earned Agent Lookup Widget Debug: Found agent name at path '${path}':`, agentName);
                         break;
                     }
                 }
                 
                 if (agentName) {
-                    console.log('As Earned Agent Lookup Widget Final: Found agent name:', agentName);
+                    console.log('As Earned Agent Lookup Widget Debug: Found agent name:', agentName);
                     
                     // Display in widget
                     this.displayAgentInfo(agentName);
@@ -234,7 +267,7 @@
                     this.showSuccess(true);
                     this.showError(false);
                 } else {
-                    console.log('As Earned Agent Lookup Widget Final: No agent name found');
+                    console.log('As Earned Agent Lookup Widget Debug: No agent name found');
                     this.handleFailedLookup();
                 }
             }
@@ -250,7 +283,7 @@
             }
 
             sendToJotForm(agentName) {
-                console.log('As Earned Agent Lookup Widget Final: Sending data to JotForm:', agentName);
+                console.log('As Earned Agent Lookup Widget Debug: Sending data to JotForm:', agentName);
                 
                 if (window.JFCustomWidget) {
                     // Try multiple possible field names that JotForm might use
@@ -262,7 +295,14 @@
                         'name',
                         'fullname',
                         'agentName',
-                        'AgentName'
+                        'AgentName',
+                        'q4_agent_name',
+                        'q5_agent_name',
+                        'q6_agent_name',
+                        'q7_agent_name',
+                        'q8_agent_name',
+                        'q9_agent_name',
+                        'q10_agent_name'
                     ];
                     
                     // Send to all possible field names
@@ -271,10 +311,31 @@
                         dataToSend[fieldName] = agentName;
                     });
                     
-                    console.log('As Earned Agent Lookup Widget Final: Sending data:', dataToSend);
+                    console.log('As Earned Agent Lookup Widget Debug: Sending data:', dataToSend);
                     JFCustomWidget.sendSubmit(dataToSend);
+                    
+                    // Update debug info
+                    this.updateDebugInfo(agentName, possibleFieldNames);
                 } else {
-                    console.log('As Earned Agent Lookup Widget Final: JotForm Custom Widget API not available');
+                    console.log('As Earned Agent Lookup Widget Debug: JotForm Custom Widget API not available');
+                }
+            }
+
+            updateDebugInfo(agentName, fieldNames) {
+                const debugContent = document.getElementById('debugContent');
+                if (debugContent) {
+                    debugContent.innerHTML = `
+                        <strong>Agent Found:</strong> ${agentName}<br>
+                        <strong>Data Sent To JotForm:</strong> Yes<br>
+                        <strong>Field Names Tried:</strong><br>
+                        ${fieldNames.map(name => `• ${name}`).join('<br>')}<br>
+                        <br>
+                        <strong>Next Steps:</strong><br>
+                        1. Check your form fields above<br>
+                        2. Look for a field that now contains "${agentName}"<br>
+                        3. If no field shows the data, the field names don't match<br>
+                        4. Tell me what field names you see in your form
+                    `;
                 }
             }
 
@@ -291,7 +352,7 @@
             }
 
             clearFields() {
-                console.log('As Earned Agent Lookup Widget Final: Clearing fields');
+                console.log('As Earned Agent Lookup Widget Debug: Clearing fields');
                 
                 // Clear widget display
                 const agentInfoDiv = document.getElementById('agentInfo');
@@ -350,20 +411,20 @@
 
         // Initialize the widget when the script loads
         document.addEventListener('DOMContentLoaded', () => {
-            new AsEarnedAgentLookupWidgetFinal();
+            new AsEarnedAgentLookupWidgetDebug();
         });
 
         // Also initialize immediately if DOM is already loaded
         if (document.readyState !== 'loading') {
-            new AsEarnedAgentLookupWidgetFinal();
+            new AsEarnedAgentLookupWidgetDebug();
         }
 
         // JotForm Custom Widget Integration
-        console.log('As Earned Agent Lookup Widget Final: Checking for JotForm Custom Widget API...');
-        console.log('As Earned Agent Lookup Widget Final: window.JFCustomWidget available:', !!window.JFCustomWidget);
+        console.log('As Earned Agent Lookup Widget Debug: Checking for JotForm Custom Widget API...');
+        console.log('As Earned Agent Lookup Widget Debug: window.JFCustomWidget available:', !!window.JFCustomWidget);
         
         if (window.JFCustomWidget) {
-            console.log('As Earned Agent Lookup Widget Final: JotForm Custom Widget API found, setting up listeners');
+            console.log('As Earned Agent Lookup Widget Debug: JotForm Custom Widget API found, setting up listeners');
             JFCustomWidget.subscribe('ready', function() {
                 console.log('JotForm Custom Widget: Ready');
             });
@@ -378,7 +439,7 @@
                 });
             });
         } else {
-            console.log('As Earned Agent Lookup Widget Final: JotForm Custom Widget API not available - this is normal when testing outside JotForm');
+            console.log('As Earned Agent Lookup Widget Debug: JotForm Custom Widget API not available - this is normal when testing outside JotForm');
         }
     </script>
 </body>
