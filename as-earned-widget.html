@@ -257,8 +257,17 @@
                 ];
                 
                 console.log('As Earned Agent Lookup Widget V2: Available input fields:');
+                console.log('As Earned Agent Lookup Widget V2: Total inputs found:', allInputs.length);
                 allInputs.forEach((input, index) => {
                     console.log(`  ${index + 1}. Name: "${input.name}", ID: "${input.id}", Type: "${input.type}"`);
+                });
+                
+                // Also check for any field containing "agent" or "name"
+                console.log('As Earned Agent Lookup Widget V2: Looking for fields containing "agent" or "name":');
+                allInputs.forEach((input, index) => {
+                    if (input.name && (input.name.toLowerCase().includes('agent') || input.name.toLowerCase().includes('name'))) {
+                        console.log(`  FOUND: ${index + 1}. Name: "${input.name}", ID: "${input.id}", Type: "${input.type}"`);
+                    }
                 });
                 
                 for (const input of allInputs) {
