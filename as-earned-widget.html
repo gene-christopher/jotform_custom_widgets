@@ -159,31 +159,48 @@
         }
 
         function startExternalInputMonitoring() {
-            console.log('As Earned Agent Lookup Widget: Starting external input monitoring using JotForm API');
+            console.log('As Earned Agent Lookup Widget: Starting parameter monitoring');
             
-            // Monitor for changes in the parent form using JotForm API
+            // Monitor for changes in widget parameters
             setInterval(function() {
-                checkForExternalInput();
+                checkForParameterChanges();
             }, 500); // Check every 500ms
         }
 
-        function checkForExternalInput() {
-            // Use JotForm Widget API to get the value from a standard JotForm field
-            // Replace 'agent_code_source_field' with the actual field name you're using
-            JFCustomWidget.getWidgetSetting('agent_code_source_field', function(value) {
-                if (value && value !== lastExternalValue) {
-                    console.log('As Earned Agent Lookup Widget: External input detected via API:', value);
-                    lastExternalValue = value;
+        function checkForParameterChanges() {
+            // First, get the field name from the widget parameter
+            JFCustomWidget.getWidgetSetting('agentCode', function(fieldName) {
+                if (fieldName) {
+                    console.log('As Earned Agent Lookup Widget: Monitoring field:', fieldName);
                     
-                    // Populate the widget input with the external value
-                    const agentCodeInput = document.getElementById('agentCodeInput');
-                    if (agentCodeInput) {
-                        agentCodeInput.value = value;
-                        // Trigger the lookup
-                        lookupAgent(value);
+                    // Try to access the field through parent window
+                    try {
+                        const parentWindow = window.parent;
+                        if (parentWindow && parentWindow.document) {
+                            const field = parentWindow.document.querySelector(`input[name="${fieldName}"]`);
+                            if (field && field.value && field.value !== lastExternalValue) {
+                                console.log('As Earned Agent Lookup Widget: Field value detected:', field.value);
+                                lastExternalValue = field.value;
+                                populateWidgetFromExternal(field.value);
+                            }
+                        }
+                    } catch (e) {
+                        console.log('As Earned Agent Lookup Widget: Cannot access parent window:', e.message);
                     }
                 }
             });
+        }
+
+        function populateWidgetFromExternal(value) {
+            console.log('As Earned Agent Lookup Widget: Populating widget from external value:', value);
+            
+            // Populate the widget input with the external value
+            const agentCodeInput = document.getElementById('agentCodeInput');
+            if (agentCodeInput) {
+                agentCodeInput.value = value;
+                // Trigger the lookup
+                lookupAgent(value);
+            }
         }
 
         function sendRealTimeUpdate(code, name) {
