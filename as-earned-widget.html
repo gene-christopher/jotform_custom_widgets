@@ -275,49 +275,60 @@
                     // Get the current agent code value
                     const agentCode = document.getElementById('as_earned_AgentCode').value;
                     
-                    // Send ALL widget data to JotForm - this is what gets included in submissions
+                    // Get the parameter value for the target field
+                    const targetField = this.getParameter('test') || 'q10_agent_name';
+                    console.log('As Earned Agent Lookup Widget Webhook: Target field from parameter:', targetField);
+                    
+                    // Send data to the field specified in the parameter
                     const dataToSend = {
-                        // Agent code field (this should already exist in your form)
-                        'as_earned_AgentCode': agentCode,
-                        
-                        // Agent name - try multiple field names
-                        'q10_agent_name': agentName,
-                        'agent_name': agentName,
+                        [targetField]: agentName,  // Use the parameter value as the field name
+                        'agent_name_hidden': agentName,  // Backup field
+                        'q10_agent_name': agentName,     // Your existing field
+                        'agent_name': agentName,         // Additional backup fields
                         'agentname': agentName,
-                        'foundAgentName': agentName,
-                        
-                        // Additional fields that might exist
-                        'agent_name_hidden': agentName,
-                        'widget_agent_name': agentName,
-                        'hidden_agent_name': agentName
+                        'foundAgentName': agentName
                     };
                     
-                    console.log('As Earned Agent Lookup Widget Webhook: Sending complete widget data:', dataToSend);
+                    console.log('As Earned Agent Lookup Widget Webhook: Sending data to form fields:', dataToSend);
                     JFCustomWidget.sendSubmit(dataToSend);
                     
                     // Update debug info
-                    this.updateDebugInfo(agentName, agentCode);
+                    this.updateDebugInfo(agentName, agentCode, targetField);
                 } else {
                     console.log('As Earned Agent Lookup Widget Webhook: JotForm Custom Widget API not available');
                 }
             }
 
-            updateDebugInfo(agentName, agentCode) {
+            getParameter(name) {
+                // Try to get parameter from JotForm Custom Widget API
+                if (window.JFCustomWidget && window.JFCustomWidget.getParameter) {
+                    return window.JFCustomWidget.getParameter(name);
+                }
+                
+                // Fallback: try to get from URL parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get(name);
+            }
+
+            updateDebugInfo(agentName, agentCode, targetField) {
                 const debugContent = document.getElementById('debugInfo');
                 if (debugContent) {
                     debugContent.innerHTML = `
                         <strong>Widget Data Being Sent:</strong><br>
                         • Agent Code: "${agentCode}"<br>
                         • Agent Name: "${agentName}"<br>
+                        • Target Field (from parameter): "${targetField}"<br>
+                        <br>
+                        <strong>Static Widget Setting:</strong><br>
+                        • Make sure "Static Widget" is UNCHECKED<br>
+                        • This allows the widget to send data to the form<br>
                         <br>
                         <strong>Fields Being Populated:</strong><br>
-                        • as_earned_AgentCode: "${agentCode}"<br>
-                        • q10_agent_name: "${agentName}"<br>
-                        • agent_name: "${agentName}"<br>
-                        • foundAgentName: "${agentName}"<br>
+                        • ${targetField}: "${agentName}" (from parameter)<br>
+                        • agent_name_hidden: "${agentName}" (backup)<br>
+                        • q10_agent_name: "${agentName}" (backup)<br>
                         <br>
-                        <strong>This data will appear in form submissions!</strong><br>
-                        The widget's internal fields are now included in the submission data.
+                        <strong>Test the form submission to see if the agent name appears!</strong>
                     `;
                 }
             }
