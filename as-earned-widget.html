@@ -3,428 +3,342 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>As Earned Agent Lookup Widget - Webhook</title>
+    <title>As Earned Agent Lookup - HTML Widget</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            margin: 0;
-            padding: 0;
-            background: transparent;
-        }
-        
-        .widget-container {
+        .agent-lookup-container {
+            max-width: 400px;
+            margin: 20px auto;
             padding: 20px;
-            background: #f8fafc;
+            border: 2px solid #007cba;
             border-radius: 8px;
-            border: 1px solid #e2e8f0;
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
         }
         
-        .form-group {
+        .agent-lookup-container h3 {
+            color: #007cba;
+            margin-top: 0;
+            text-align: center;
+        }
+        
+        .input-group {
             margin-bottom: 15px;
         }
         
-        .form-group label {
+        .input-group label {
             display: block;
             margin-bottom: 5px;
-            font-weight: 600;
-            color: #374151;
-            font-size: 0.9rem;
+            font-weight: bold;
+            color: #333;
         }
         
-        .form-group input {
+        .input-group input {
             width: 100%;
-            padding: 10px 12px;
-            border: 2px solid #e5e7eb;
-            border-radius: 6px;
-            font-size: 0.95rem;
-            transition: border-color 0.2s ease;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
             box-sizing: border-box;
         }
         
-        .form-group input:focus {
-            outline: none;
-            border-color: #667eea;
+        .lookup-button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007cba;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 15px;
         }
         
-        .form-group input[readonly] {
-            background-color: #f9fafb;
-            color: #6b7280;
+        .lookup-button:hover {
+            background-color: #005a8b;
+        }
+        
+        .lookup-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .agent-info {
+            display: none;
+            padding: 15px;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        
+        .agent-info.show {
+            display: block;
+        }
+        
+        .agent-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #155724;
+            margin-bottom: 5px;
+        }
+        
+        .agent-code {
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        .error-message {
+            display: none;
+            padding: 15px;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            color: #721c24;
+            margin-bottom: 15px;
+        }
+        
+        .error-message.show {
+            display: block;
         }
         
         .loading {
             display: none;
-            color: #667eea;
-            font-size: 0.9rem;
-            margin-top: 5px;
+            text-align: center;
+            color: #007cba;
+            font-style: italic;
         }
         
-        .error {
-            display: none;
-            color: #ef4444;
-            font-size: 0.9rem;
-            margin-top: 5px;
-        }
-        
-        .success {
-            display: none;
-            color: #10b981;
-            font-size: 0.9rem;
-            margin-top: 5px;
+        .loading.show {
+            display: block;
         }
         
         .debug-info {
-            background: #f3f4f6;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
+            margin-top: 15px;
             padding: 10px;
-            margin-top: 10px;
-            font-size: 0.8rem;
-            color: #374151;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #495057;
         }
     </style>
 </head>
 <body>
-    <div class="widget-container">
-        <div class="form-group">
-            <label for="as_earned_AgentCode">Agent Code *</label>
-            <input type="text" id="as_earned_AgentCode" name="as_earned_AgentCode" placeholder="Enter agent code...">
-            <div class="loading" id="loading">Looking up agent...</div>
-            <div class="error" id="error">Agent not found</div>
-            <div class="success" id="success">Agent found! Check the form fields below.</div>
+    <div class="agent-lookup-container">
+        <h3>Agent Lookup</h3>
+        
+        <div class="input-group">
+            <label for="agentCodeInput">Enter Agent Code:</label>
+            <input type="text" id="agentCodeInput" placeholder="Enter agent code here">
         </div>
         
-        <!-- Display found agent info -->
-        <div class="form-group" id="agentInfo" style="display: none;">
-            <label>Found Agent:</label>
-            <input type="text" id="foundAgentName" readonly placeholder="Agent name will appear here">
+        <button class="lookup-button" id="lookupButton" onclick="lookupAgent()">
+            Look Up Agent
+        </button>
+        
+        <div class="loading" id="loading">
+            Looking up agent...
         </div>
         
-        <!-- Debug information -->
+        <div class="agent-info" id="agentInfo">
+            <div class="agent-name" id="agentName">Agent Name</div>
+            <div class="agent-code" id="agentCodeDisplay">Agent Code</div>
+        </div>
+        
+        <div class="error-message" id="errorMessage">
+            Agent not found. Please check the agent code and try again.
+        </div>
+        
         <div class="debug-info" id="debugInfo">
-            <strong>Instructions:</strong><br>
-            1. Enter an agent code above<br>
-            2. The widget will populate the "agent_name_hidden" field<br>
-            3. Set up conditional logic to copy from "agent_name_hidden" to "q10_agent_name"<br>
-            4. The visible field should then show the agent name
+            <strong>HTML Widget - Direct Form Access</strong><br>
+            This widget runs in the form context and can directly access form fields.<br>
+            <br>
+            <strong>Target Fields:</strong><br>
+            • q10_agent_name<br>
+            • agent_name_hidden<br>
+            • agent_name<br>
+            <br>
+            <strong>Status:</strong> Ready to lookup agent
         </div>
     </div>
 
-    <!-- Include JotForm Custom Widget API -->
-    <script src="https://js.jotform.com/JotFormCustomWidget.js"></script>
-    
-    <script type="text/javascript">
-        // Configuration
-        const CONFIG = {
-            proxyEndpoint: 'https://default3bbdae4643cd41c5868fb316259734.bd.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/c047d855f89d41688ffb7de54a581cee/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=KKmAhgBHOwwp0o6ck-F08gyWpiCia6Xdv-WE2MZLUns'
-        };
-
-        class AsEarnedAgentLookupWidgetWebhook {
-            constructor() {
-                this.isProcessing = false;
-                this.init();
-            }
-
-            init() {
-                console.log('As Earned Agent Lookup Widget Webhook: Initializing...');
-                this.setupEventListeners();
-            }
-
-            setupEventListeners() {
-                const agentCodeField = document.getElementById('as_earned_AgentCode');
-                
-                if (agentCodeField) {
-                    agentCodeField.addEventListener('blur', (e) => {
-                        if (!this.isProcessing) {
-                            this.lookupAgent(e.target.value);
-                        }
-                    });
-                    
-                    agentCodeField.addEventListener('keypress', (e) => {
-                        if (e.key === 'Enter' && !this.isProcessing) {
-                            e.preventDefault();
-                            this.lookupAgent(e.target.value);
-                        }
-                    });
-                }
-            }
-
-            async lookupAgent(agentCode) {
-                if (!agentCode || agentCode.trim() === '') {
-                    this.clearFields();
-                    return;
-                }
-
-                if (this.isProcessing) {
-                    return;
-                }
-
-                this.isProcessing = true;
-                this.showLoading(true);
-                this.showError(false);
-                this.showSuccess(false);
-
-                try {
-                    const result = await this.makeSecureApiCall(agentCode);
-                    
-                    if (result && result.success && result.data) {
-                        this.handleSuccessfulLookup(result.data);
-                    } else {
-                        this.handleFailedLookup();
-                    }
-                } catch (error) {
-                    console.error('As Earned Agent Lookup Widget Webhook: Lookup error:', error);
-                    this.handleFailedLookup();
-                } finally {
-                    this.isProcessing = false;
-                    this.showLoading(false);
-                }
-            }
-
-            async makeSecureApiCall(agentCode) {
-                try {
-                    const response = await fetch(CONFIG.proxyEndpoint, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            as_earned_AgentCode: agentCode
-                        })
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-
-                    const result = await response.json();
-                    console.log('As Earned Agent Lookup Widget Webhook: API response:', result);
-                    
-                    // Wrap the result in the expected format if needed
-                    if (result && !result.hasOwnProperty('success')) {
-                        console.log('As Earned Agent Lookup Widget Webhook: Wrapping response in success/data format');
-                        const wrappedResult = {
-                            success: true,
-                            data: result.data || result
-                        };
-                        console.log('As Earned Agent Lookup Widget Webhook: Final wrapped result:', wrappedResult);
-                        return wrappedResult;
-                    }
-                    
-                    return result;
-                } catch (error) {
-                    console.error('As Earned Agent Lookup Widget Webhook: API call failed:', error);
-                    throw error;
-                }
-            }
-
-            handleSuccessfulLookup(agentData) {
-                console.log('As Earned Agent Lookup Widget Webhook: Starting to populate fields with data:', agentData);
-                
-                // Try multiple possible paths for the agent name
-                let agentName = null;
-                
-                const possiblePaths = [
-                    'data.as_earned_AgentName',
-                    'as_earned_AgentName',
-                    'data.agentName',
-                    'agentName',
-                    'data.name',
-                    'name'
-                ];
-                
-                for (const path of possiblePaths) {
-                    agentName = this.getNestedValue(agentData, path);
-                    console.log(`As Earned Agent Lookup Widget Webhook: Trying path '${path}':`, agentName);
-                    if (agentName) {
-                        console.log(`As Earned Agent Lookup Widget Webhook: Found agent name at path '${path}':`, agentName);
-                        break;
-                    }
-                }
-                
-                if (agentName) {
-                    console.log('As Earned Agent Lookup Widget Webhook: Found agent name:', agentName);
-                    
-                    // Display in widget
-                    this.displayAgentInfo(agentName);
-                    
-                    // Send to JotForm using the Custom Widget API
-                    this.sendToJotForm(agentName);
-                    
-                    this.showSuccess(true);
-                    this.showError(false);
-                } else {
-                    console.log('As Earned Agent Lookup Widget Webhook: No agent name found');
-                    this.handleFailedLookup();
-                }
-            }
-
-            displayAgentInfo(agentName) {
-                const agentInfoDiv = document.getElementById('agentInfo');
-                const foundAgentNameField = document.getElementById('foundAgentName');
-                
-                if (agentInfoDiv && foundAgentNameField) {
-                    foundAgentNameField.value = agentName;
-                    agentInfoDiv.style.display = 'block';
-                }
-            }
-
-            sendToJotForm(agentName) {
-                console.log('As Earned Agent Lookup Widget Webhook: Sending data to JotForm:', agentName);
-                
-                if (window.JFCustomWidget) {
-                    // Get the current agent code value
-                    const agentCode = document.getElementById('as_earned_AgentCode').value;
-                    
-                    // Get the parameter value for the target field
-                    const targetField = this.getParameter('test') || 'q10_agent_name';
-                    console.log('As Earned Agent Lookup Widget Webhook: Target field from parameter:', targetField);
-                    
-                    // Send data to the field specified in the parameter
-                    const dataToSend = {
-                        [targetField]: agentName,  // Use the parameter value as the field name
-                        'agent_name_hidden': agentName,  // Backup field
-                        'q10_agent_name': agentName,     // Your existing field
-                        'agent_name': agentName,         // Additional backup fields
-                        'agentname': agentName,
-                        'foundAgentName': agentName
-                    };
-                    
-                    console.log('As Earned Agent Lookup Widget Webhook: Sending data to form fields:', dataToSend);
-                    JFCustomWidget.sendSubmit(dataToSend);
-                    
-                    // Update debug info
-                    this.updateDebugInfo(agentName, agentCode, targetField);
-                } else {
-                    console.log('As Earned Agent Lookup Widget Webhook: JotForm Custom Widget API not available');
-                }
-            }
-
-            getParameter(name) {
-                // Try to get parameter from JotForm Custom Widget API
-                if (window.JFCustomWidget && window.JFCustomWidget.getParameter) {
-                    return window.JFCustomWidget.getParameter(name);
-                }
-                
-                // Fallback: try to get from URL parameters
-                const urlParams = new URLSearchParams(window.location.search);
-                return urlParams.get(name);
-            }
-
-            updateDebugInfo(agentName, agentCode, targetField) {
-                const debugContent = document.getElementById('debugInfo');
-                if (debugContent) {
-                    debugContent.innerHTML = `
-                        <strong>Widget Data Being Sent:</strong><br>
-                        • Agent Code: "${agentCode}"<br>
-                        • Agent Name: "${agentName}"<br>
-                        • Target Field (from parameter): "${targetField}"<br>
-                        <br>
-                        <strong>Static Widget Setting:</strong><br>
-                        • Make sure "Static Widget" is UNCHECKED<br>
-                        • This allows the widget to send data to the form<br>
-                        <br>
-                        <strong>Fields Being Populated:</strong><br>
-                        • ${targetField}: "${agentName}" (from parameter)<br>
-                        • agent_name_hidden: "${agentName}" (backup)<br>
-                        • q10_agent_name: "${agentName}" (backup)<br>
-                        <br>
-                        <strong>Test the form submission to see if the agent name appears!</strong>
-                    `;
-                }
-            }
-
-            handleFailedLookup() {
-                this.clearFields();
-                this.showError(true);
-                this.showSuccess(false);
-            }
-
-            getNestedValue(obj, path) {
-                return path.split('.').reduce((current, key) => {
-                    return current && current[key] !== undefined ? current[key] : null;
-                }, obj);
-            }
-
-            clearFields() {
-                console.log('As Earned Agent Lookup Widget Webhook: Clearing fields');
-                
-                // Clear widget display
-                const agentInfoDiv = document.getElementById('agentInfo');
-                const foundAgentNameField = document.getElementById('foundAgentName');
-                
-                if (agentInfoDiv) {
-                    agentInfoDiv.style.display = 'none';
-                }
-                if (foundAgentNameField) {
-                    foundAgentNameField.value = '';
-                }
-                
-                // Send empty data to JotForm
-                if (window.JFCustomWidget) {
-                    const dataToSend = {
-                        'agent_name_hidden': '',
-                        'widget_agent_name': '',
-                        'hidden_agent_name': ''
-                    };
-                    
-                    JFCustomWidget.sendSubmit(dataToSend);
-                }
-            }
-
-            showLoading(show) {
-                const loadingDiv = document.getElementById('loading');
-                if (loadingDiv) {
-                    loadingDiv.style.display = show ? 'block' : 'none';
-                }
-            }
-
-            showError(show) {
-                const errorDiv = document.getElementById('error');
-                if (errorDiv) {
-                    errorDiv.style.display = show ? 'block' : 'none';
-                }
-            }
-
-            showSuccess(show) {
-                const successDiv = document.getElementById('success');
-                if (successDiv) {
-                    successDiv.style.display = show ? 'block' : 'none';
-                }
-            }
-        }
-
-        // Initialize the widget when the script loads
-        document.addEventListener('DOMContentLoaded', () => {
-            new AsEarnedAgentLookupWidgetWebhook();
-        });
-
-        // Also initialize immediately if DOM is already loaded
-        if (document.readyState !== 'loading') {
-            new AsEarnedAgentLookupWidgetWebhook();
-        }
-
-        // JotForm Custom Widget Integration
-        console.log('As Earned Agent Lookup Widget Webhook: Checking for JotForm Custom Widget API...');
-        console.log('As Earned Agent Lookup Widget Webhook: window.JFCustomWidget available:', !!window.JFCustomWidget);
+    <script>
+        // HTML Widget - Direct Form Access
+        console.log('As Earned HTML Widget: Initialized');
         
-        if (window.JFCustomWidget) {
-            console.log('As Earned Agent Lookup Widget Webhook: JotForm Custom Widget API found, setting up listeners');
-            JFCustomWidget.subscribe('ready', function() {
-                console.log('JotForm Custom Widget: Ready');
+        function lookupAgent() {
+            const agentCode = document.getElementById('agentCodeInput').value.trim();
+            
+            if (!agentCode) {
+                showError('Please enter an agent code');
+                return;
+            }
+            
+            console.log('As Earned HTML Widget: Looking up agent code:', agentCode);
+            
+            // Show loading state
+            showLoading(true);
+            hideError();
+            hideAgentInfo();
+            
+            // Make API call
+            fetch('https://api.asearned.com/agents/' + encodeURIComponent(agentCode))
+                .then(response => {
+                    console.log('As Earned HTML Widget: API response status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('As Earned HTML Widget: API response data:', data);
+                    
+                    if (data && data.data && data.data.name) {
+                        const agentName = data.data.name;
+                        console.log('As Earned HTML Widget: Found agent:', agentName);
+                        
+                        // Display agent info in widget
+                        displayAgentInfo(agentName, agentCode);
+                        
+                        // Populate form fields directly
+                        populateFormFields(agentName, agentCode);
+                        
+                        // Update debug info
+                        updateDebugInfo(agentName, agentCode, true);
+                        
+                    } else {
+                        console.log('As Earned HTML Widget: No agent found');
+                        showError('Agent not found');
+                        updateDebugInfo('', agentCode, false);
+                    }
+                })
+                .catch(error => {
+                    console.error('As Earned HTML Widget: API error:', error);
+                    showError('Error looking up agent: ' + error.message);
+                    updateDebugInfo('', agentCode, false);
+                })
+                .finally(() => {
+                    showLoading(false);
+                });
+        }
+        
+        function displayAgentInfo(agentName, agentCode) {
+            document.getElementById('agentName').textContent = agentName;
+            document.getElementById('agentCodeDisplay').textContent = 'Code: ' + agentCode;
+            document.getElementById('agentInfo').classList.add('show');
+        }
+        
+        function populateFormFields(agentName, agentCode) {
+            console.log('As Earned HTML Widget: Populating form fields with:', agentName);
+            
+            // List of possible field names to try
+            const fieldNames = [
+                'q10_agent_name',
+                'agent_name_hidden', 
+                'agent_name',
+                'agentname',
+                'foundAgentName',
+                'widget_agent_name'
+            ];
+            
+            let fieldsUpdated = 0;
+            
+            // Try to find and populate each field
+            fieldNames.forEach(fieldName => {
+                // Try by name attribute
+                let field = document.querySelector(`input[name="${fieldName}"]`);
+                if (!field) {
+                    // Try by ID
+                    field = document.getElementById(fieldName);
+                }
+                if (!field) {
+                    // Try by name containing the field name
+                    field = document.querySelector(`input[name*="${fieldName}"]`);
+                }
+                
+                if (field) {
+                    field.value = agentName;
+                    // Trigger change event
+                    field.dispatchEvent(new Event('change', { bubbles: true }));
+                    field.dispatchEvent(new Event('input', { bubbles: true }));
+                    console.log('As Earned HTML Widget: Updated field:', fieldName, 'with value:', agentName);
+                    fieldsUpdated++;
+                } else {
+                    console.log('As Earned HTML Widget: Field not found:', fieldName);
+                }
             });
             
-            JFCustomWidget.subscribe('submit', function() {
-                console.log('JotForm Custom Widget: Submit triggered');
-                // Send the current values to JotForm
-                const agentCode = document.getElementById('as_earned_AgentCode').value;
+            console.log('As Earned HTML Widget: Updated', fieldsUpdated, 'fields');
+            
+            // Also try to update the agent code field if it exists
+            const agentCodeFields = [
+                'as_earned_AgentCode',
+                'agent_code',
+                'q10_agent_code'
+            ];
+            
+            agentCodeFields.forEach(fieldName => {
+                let field = document.querySelector(`input[name="${fieldName}"]`) || 
+                           document.getElementById(fieldName) ||
+                           document.querySelector(`input[name*="${fieldName}"]`);
                 
-                JFCustomWidget.sendSubmit({
-                    'as_earned_AgentCode': agentCode
-                });
+                if (field) {
+                    field.value = agentCode;
+                    field.dispatchEvent(new Event('change', { bubbles: true }));
+                    console.log('As Earned HTML Widget: Updated agent code field:', fieldName);
+                }
             });
-        } else {
-            console.log('As Earned Agent Lookup Widget Webhook: JotForm Custom Widget API not available - this is normal when testing outside JotForm');
         }
+        
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            const button = document.getElementById('lookupButton');
+            
+            if (show) {
+                loading.classList.add('show');
+                button.disabled = true;
+                button.textContent = 'Looking up...';
+            } else {
+                loading.classList.remove('show');
+                button.disabled = false;
+                button.textContent = 'Look Up Agent';
+            }
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+        }
+        
+        function hideError() {
+            document.getElementById('errorMessage').classList.remove('show');
+        }
+        
+        function hideAgentInfo() {
+            document.getElementById('agentInfo').classList.remove('show');
+        }
+        
+        function updateDebugInfo(agentName, agentCode, success) {
+            const debugDiv = document.getElementById('debugInfo');
+            const status = success ? 'Agent found and fields updated' : 'Lookup failed';
+            
+            debugDiv.innerHTML = `
+                <strong>HTML Widget - Direct Form Access</strong><br>
+                This widget runs in the form context and can directly access form fields.<br>
+                <br>
+                <strong>Last Lookup:</strong><br>
+                • Agent Code: ${agentCode}<br>
+                • Agent Name: ${agentName || 'Not found'}<br>
+                • Status: ${status}<br>
+                <br>
+                <strong>Target Fields Being Updated:</strong><br>
+                • q10_agent_name<br>
+                • agent_name_hidden<br>
+                • agent_name<br>
+                <br>
+                <strong>This should work because the widget runs in the form context!</strong>
+            `;
+        }
+        
+        // Initialize
+        console.log('As Earned HTML Widget: Ready');
     </script>
 </body>
 </html>
