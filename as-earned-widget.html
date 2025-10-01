@@ -247,6 +247,8 @@
                     'agent_name', 
                     'as_earned_agentname',
                     'as_earned_agent_name',
+                    'as_earned_agentname',
+                    'as_earned_agent_name',
                     'agentname',
                     'agent_name',
                     'name',
@@ -262,11 +264,13 @@
                 for (const input of allInputs) {
                     if (input.name) {
                         const fieldName = input.name.toLowerCase();
+                        console.log(`As Earned Agent Lookup Widget V2: Checking field "${input.name}" (lowercase: "${fieldName}")`);
                         
                         // Check if field name contains any agent name patterns
                         for (const pattern of agentNamePatterns) {
+                            console.log(`As Earned Agent Lookup Widget V2: Checking pattern "${pattern}" against "${fieldName}"`);
                             if (fieldName.includes(pattern)) {
-                                console.log(`As Earned Agent Lookup Widget V2: Found potential agent name field: ${input.name}`);
+                                console.log(`As Earned Agent Lookup Widget V2: MATCH! Found potential agent name field: ${input.name}`);
                                 targetField = input;
                                 break;
                             }
