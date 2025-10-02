@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>As Earned Agent Lookup Widget - External Input</title>
+    <title>Minimal Agent Lookup Widget</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -50,27 +50,6 @@
             background-color: #f9fafb;
             color: #6b7280;
         }
-        
-        .loading {
-            display: none;
-            color: #667eea;
-            font-size: 0.9rem;
-            margin-top: 5px;
-        }
-        
-        .error {
-            display: none;
-            color: #ef4444;
-            font-size: 0.9rem;
-            margin-top: 5px;
-        }
-        
-        .success {
-            display: none;
-            color: #10b981;
-            font-size: 0.9rem;
-            margin-top: 5px;
-        }
     </style>
 </head>
 <body>
@@ -78,9 +57,6 @@
         <div class="form-group">
             <label for="agentCodeInput">Agent Code *</label>
             <input type="text" id="agentCodeInput" placeholder="Enter agent code...">
-            <div class="loading" id="loading">Looking up agent...</div>
-            <div class="error" id="error">Agent not found</div>
-            <div class="success" id="success">Agent found!</div>
         </div>
         
         <div class="form-group">
@@ -93,37 +69,22 @@
     <script src="//js.jotform.com/JotFormCustomWidget.min.js"></script>
     
     <script type="text/javascript">
-        // Configuration - NO API KEYS EXPOSED
+        // Configuration
         const CONFIG = {
             proxyEndpoint: 'https://default3bbdae4643cd41c5868fb316259734.bd.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/c047d855f89d41688ffb7de54a581cee/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=KKmAhgBHOwwp0o6ck-F08gyWpiCia6Xdv-WE2MZLUns'
         };
 
-        // Global variables to store widget state
+        // Global variables
         let isProcessing = false;
         let agentCode = '';
         let agentName = '';
-        let lastExternalValue = '';
 
-        // Wait for JotForm Custom Widget API to be ready
+        // Initialize widget
         JFCustomWidget.subscribe("ready", function() {
-            console.log('As Earned Agent Lookup Widget: Widget ready');
-            
-            // Setup event listeners
             setupEventListeners();
             
-            // Start monitoring for external input
-            startExternalInputMonitoring();
-            
-            // Subscribe to form submission
             JFCustomWidget.subscribe("submit", function() {
-                console.log('As Earned Agent Lookup Widget: Form submit triggered');
                 handleFormSubmit();
-            });
-            
-            // Subscribe to form reset
-            JFCustomWidget.subscribe("reset", function() {
-                console.log('As Earned Agent Lookup Widget: Form reset triggered');
-                resetWidget();
             });
         });
 
@@ -131,186 +92,98 @@
             const agentCodeInput = document.getElementById('agentCodeInput');
             
             if (agentCodeInput) {
-                console.log('As Earned Agent Lookup Widget: Setting up event listeners');
-                
                 agentCodeInput.addEventListener('input', function(e) {
-                    console.log('As Earned Agent Lookup Widget: Input event triggered, value:', e.target.value);
-                    // Send real-time updates for calculate conditions
                     sendRealTimeUpdate(e.target.value, agentName);
                 });
                 
                 agentCodeInput.addEventListener('blur', function(e) {
-                    console.log('As Earned Agent Lookup Widget: Blur event triggered, value:', e.target.value);
                     if (!isProcessing) {
                         lookupAgent(e.target.value);
                     }
                 });
                 
                 agentCodeInput.addEventListener('keypress', function(e) {
-                    console.log('As Earned Agent Lookup Widget: Keypress event triggered, key:', e.key);
                     if (e.key === 'Enter' && !isProcessing) {
                         e.preventDefault();
                         lookupAgent(e.target.value);
                     }
                 });
-            } else {
-                console.error('As Earned Agent Lookup Widget: Could not find agentCodeInput element');
-            }
-        }
-
-        function startExternalInputMonitoring() {
-            console.log('As Earned Agent Lookup Widget: Starting external input monitoring');
-            
-            // Monitor for changes in the parent form that might affect this widget
-            setInterval(function() {
-                checkForExternalInput();
-            }, 500); // Check every 500ms
-        }
-
-        function checkForExternalInput() {
-            // Try to find a hidden field that might contain the agent code from calculate conditions
-            // This field should be created by your calculate condition
-            const externalField = document.querySelector('input[name="widget_agent_code_input"]');
-            
-            if (externalField && externalField.value && externalField.value !== lastExternalValue) {
-                console.log('As Earned Agent Lookup Widget: External input detected:', externalField.value);
-                lastExternalValue = externalField.value;
-                
-                // Populate the widget input with the external value
-                const agentCodeInput = document.getElementById('agentCodeInput');
-                if (agentCodeInput) {
-                    agentCodeInput.value = externalField.value;
-                    // Trigger the lookup
-                    lookupAgent(externalField.value);
-                }
             }
         }
 
         function sendRealTimeUpdate(code, name) {
-            // Send individual values for calculate conditions to access
             const data = {
                 valid: true,
-                value: code,  // This exposes the agent code for calculate conditions
-                agentCode: code,  // Additional field for agent code
-                agentName: name   // Additional field for agent name
+                value: code,
+                agentCode: code,
+                agentName: name
             };
-            
-            console.log('As Earned Agent Lookup Widget: Sending real-time update:', data);
             JFCustomWidget.sendData(data);
         }
 
         function handleFormSubmit() {
-            console.log('As Earned Agent Lookup Widget: Handling form submit');
-            console.log('As Earned Agent Lookup Widget: Current agent code:', agentCode);
-            console.log('As Earned Agent Lookup Widget: Current agent name:', agentName);
-            
-            // Create a formatted string with both values for final submission
             const widgetValue = `Agent Code: ${agentCode} | Agent Name: ${agentName}`;
-            
-            // Send data using proper JotForm API format for final submission
             const data = {
-                valid: true,  // Required: indicates if widget input is valid
-                value: widgetValue  // Required: the data to save with form submission
+                valid: true,
+                value: widgetValue
             };
-            
-            console.log('As Earned Agent Lookup Widget: Sending final submission data to JotForm:', data);
             JFCustomWidget.sendSubmit(data);
         }
 
         async function lookupAgent(code) {
-            console.log('As Earned Agent Lookup Widget: lookupAgent called with:', code);
-            
             if (!code || code.trim() === '') {
-                console.log('As Earned Agent Lookup Widget: Empty agent code, clearing fields');
                 clearFields();
                 return;
             }
 
-            if (isProcessing) {
-                console.log('As Earned Agent Lookup Widget: Already processing, skipping duplicate request');
-                return;
-            }
+            if (isProcessing) return;
 
             isProcessing = true;
-            showLoading(true);
-            showError(false);
-            showSuccess(false);
-
-            console.log('As Earned Agent Lookup Widget: Looking up agent code:', code);
 
             try {
                 const result = await makeSecureApiCall(code);
                 
                 if (result && result.success && result.data) {
-                    console.log('As Earned Agent Lookup Widget: Lookup successful:', result.data);
                     populateFields(result.data, code);
-                    showSuccess(true);
                 } else {
-                    console.log('As Earned Agent Lookup Widget: No data found for agent code:', code);
                     clearFields();
-                    showError(true);
                 }
             } catch (error) {
-                console.error('As Earned Agent Lookup Widget: Lookup error:', error);
                 clearFields();
-                showError(true);
             } finally {
                 isProcessing = false;
-                showLoading(false);
             }
         }
 
         async function makeSecureApiCall(code) {
-            console.log('As Earned Agent Lookup Widget: Making API call for agent code:', code);
-            
-            try {
-                const response = await fetch(CONFIG.proxyEndpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        as_earned_AgentCode: code
-                    })
-                });
+            const response = await fetch(CONFIG.proxyEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    as_earned_AgentCode: code
+                })
+            });
 
-                console.log('As Earned Agent Lookup Widget: API response status:', response.status);
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('As Earned Agent Lookup Widget: API error response:', errorText);
-                    throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
-                }
-
-                const result = await response.json();
-                console.log('As Earned Agent Lookup Widget: API response:', result);
-                
-                // Wrap the result in the expected format if needed
-                if (result && !result.hasOwnProperty('success')) {
-                    console.log('As Earned Agent Lookup Widget: Wrapping response in success/data format');
-                    const wrappedResult = {
-                        success: true,
-                        data: result.data || result
-                    };
-                    console.log('As Earned Agent Lookup Widget: Final wrapped result:', wrappedResult);
-                    return wrappedResult;
-                }
-                
-                return result;
-            } catch (error) {
-                console.error('As Earned Agent Lookup Widget: API call failed:', error);
-                throw error;
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
+
+            const result = await response.json();
+            
+            if (result && !result.hasOwnProperty('success')) {
+                return {
+                    success: true,
+                    data: result.data || result
+                };
+            }
+            
+            return result;
         }
 
         function populateFields(agentData, code) {
-            console.log('As Earned Agent Lookup Widget: Starting to populate fields with data:', agentData);
-            
-            // Store the agent code
             agentCode = code;
-            
-            // Try multiple possible paths for the agent name
-            let name = null;
             
             const possiblePaths = [
                 'data.as_earned_AgentName',
@@ -321,29 +194,20 @@
                 'name'
             ];
             
+            let name = null;
             for (const path of possiblePaths) {
                 name = getNestedValue(agentData, path);
-                console.log(`As Earned Agent Lookup Widget: Trying path '${path}':`, name);
-                if (name) {
-                    console.log(`As Earned Agent Lookup Widget: Found agent name at path '${path}':`, name);
-                    break;
-                }
+                if (name) break;
             }
             
             if (name) {
                 agentName = name;
-                console.log('As Earned Agent Lookup Widget: Setting agent name display to:', name);
-                
-                // Update the display field
                 const agentNameDisplay = document.getElementById('agentNameDisplay');
                 if (agentNameDisplay) {
                     agentNameDisplay.value = name;
                 }
-                
-                // Send real-time update with both values
                 sendRealTimeUpdate(code, name);
             } else {
-                console.log('As Earned Agent Lookup Widget: No agent name found in any expected path');
                 clearFields();
             }
         }
@@ -355,7 +219,6 @@
         }
 
         function clearFields() {
-            console.log('As Earned Agent Lookup Widget: Clearing fields');
             agentCode = '';
             agentName = '';
             
@@ -364,43 +227,7 @@
                 agentNameDisplay.value = '';
             }
             
-            // Send real-time update with empty values
             sendRealTimeUpdate('', '');
-        }
-
-        function resetWidget() {
-            console.log('As Earned Agent Lookup Widget: Resetting widget');
-            clearFields();
-            
-            const agentCodeInput = document.getElementById('agentCodeInput');
-            if (agentCodeInput) {
-                agentCodeInput.value = '';
-            }
-            
-            showError(false);
-            showSuccess(false);
-            showLoading(false);
-        }
-
-        function showLoading(show) {
-            const loadingDiv = document.getElementById('loading');
-            if (loadingDiv) {
-                loadingDiv.style.display = show ? 'block' : 'none';
-            }
-        }
-
-        function showError(show) {
-            const errorDiv = document.getElementById('error');
-            if (errorDiv) {
-                errorDiv.style.display = show ? 'block' : 'none';
-            }
-        }
-
-        function showSuccess(show) {
-            const successDiv = document.getElementById('success');
-            if (successDiv) {
-                successDiv.style.display = show ? 'block' : 'none';
-            }
         }
     </script>
 </body>
